@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import toast from "react-hot-toast";
 import { axiosInstance } from "../lib/axios";
-import {useAuthStore} from "./useAuthStore";
+import { useAuthStore } from "./useAuthStore";
 
 export const useChatStore = create((set, get) => ({
   messages: [],
@@ -44,38 +44,33 @@ export const useChatStore = create((set, get) => ({
       set({ messages: [...messages, response.data] });
     } catch (error) {
       toast.error("Failed to send message");
-    } finally {
-      // You can add any finalization logic here if needed
     }
   },
-  
+
   subscribeToMessages: () => {
-    const {selectedUser}=get();
+    const { selectedUser } = get();
     if (!selectedUser) return;
 
     const socket = useAuthStore.getState().socket;
+    if (!socket) return;
 
-    //Optimize this later, currently it is adding multiple listeners for the same event
     socket.on("newMessage", (newMessage) => {
-      const isMessageSentFromSelectedUser = newMessage.senderId === selectedUser._id;
-      if (!isMessageSentFromSelectedUser) {
-        return;
-      }
-      if(newMessage.senderId !== selectedUser._id){
-        return;
-      }
+      const isMessageSentFromSelectedUser =
+        newMessage.senderId === selectedUser._id;
+      if (!isMessageSentFromSelectedUser) return;
+
       set({
         messages: [...get().messages, newMessage],
-      })
+      });
     });
   },
 
   unSubscribefromMessages: () => {
     const socket = useAuthStore.getState().socket;
+    if (!socket) return;
     socket.off("newMessage");
   },
 
-  //Optimize this one later-----
   setSelectedUser: (selectedUser) => {
     set({ selectedUser });
   },
